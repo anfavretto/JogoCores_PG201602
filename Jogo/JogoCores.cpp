@@ -8,6 +8,11 @@
 using namespace Jogo;
 using namespace std;
 
+const int TotalRetangulosComprimento = 20;
+const int TotalRetangulosAltura = 40;
+const int LarguraJanelaPixels = 660;
+const int AlturaJanelaPixels = 500;
+const int TamanhoJanela = 40;
 
 GLfloat xb = 0.25, yb = 0.25;
 GLfloat ultimoX = -1.0, ultimoY = -1.0;
@@ -24,7 +29,7 @@ void init() {
 
 	//Inicializa a visualização
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	//glLoadIdentity();
 	glOrtho(0.0, 40.0, 0.0, 40.0, -1.0, 1.0);
 }
 
@@ -41,17 +46,19 @@ void render() {
 	int altura = 1;
 	int largura = 2;
 	int indiceRetanguloAtual = 0;
+	
 
 	float xx; // Canto 0 da tela
 	float yy = 0;
 	glBegin(GL_QUADS);
-	for (int y = 0; y < 40; y++) {
+	for (int y = 0; y < TotalRetangulosAltura; y++) {
 		xx = 0;
-		for (int x = 0; x < 20; x++) {
+		for (int x = 0; x < TotalRetangulosComprimento; x++) {
 			Retangulo retanguloAtual = retangulos[indiceRetanguloAtual];
-
-			drawRect(xx, yy, largura, altura, retanguloAtual.ObterR(), retanguloAtual.ObterG(), retanguloAtual.ObterB());
-
+			
+			if (retanguloAtual.EstaVisivel()) {
+				drawRect(xx, yy, largura, altura, retanguloAtual.ObterR(), retanguloAtual.ObterG(), retanguloAtual.ObterB());
+			}
 			indiceRetanguloAtual++;
 			xx += largura; // aumento na largura para desenhar próximo retângulo
 		}
@@ -70,26 +77,21 @@ void tratarTeclado(GLFWwindow* window, int key, int scancode, int action, int mo
 }
 
 static void tratarPosMouse(GLFWwindow* window, double xpos, double ypos)
-{
-	if (ultimoX == -1.0) ultimoX = xpos;
-	if (ultimoY == -1.0) ultimoX = ypos;
-
-	if (xpos - ultimoX > 0) xb += 0.01;
-	if (xpos - ultimoX < 0) xb -= 0.01;
-	if (ypos - ultimoY > 0) yb -= 0.01;
-	if (ypos - ultimoY < 0) yb += 0.01;
-
+{		
 	ultimoX = xpos;
 	ultimoY = ypos;
 }
 
 void tratarMouse(GLFWwindow* window, int button, int action, int mods)
 {
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		r = rand() % 256;
-		g = rand() % 256;
-		b = rand() % 256;
+		GLvoid* pixels = new unsigned char[TamanhoJanela*TamanhoJanela*3];
+		glReadPixels(0, 0, TamanhoJanela, TamanhoJanela, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		
+		/*string r = pixels[0];
+		string g = pixels[1];
+		string b = pixels[2];*/
 	}
 }
 
@@ -123,7 +125,7 @@ int CALLBACK WinMain(
 		return -1;
 
 	//Criar a a janela
-	window = glfwCreateWindow(660, 500, "Jogo das Cores", NULL, NULL);
+	window = glfwCreateWindow(LarguraJanelaPixels, AlturaJanelaPixels, "Jogo das Cores", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -138,11 +140,11 @@ int CALLBACK WinMain(
 
 	//Define a função de callback para tratar eventos do mouse
 	glfwSetMouseButtonCallback(window, tratarMouse);
-
+	
 	//Define a função de callback para tratar posição do mouse
 	glfwSetCursorPosCallback(window, tratarPosMouse);
 
-
+	
 	//Inicializa a camera
 	init();
 
