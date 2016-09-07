@@ -12,16 +12,19 @@ using namespace std;
 
 const int TotalRetangulosComprimento = 20;
 const int TotalRetangulosAltura = 40;
-const int LarguraJanelaPixels = 660;
-const int AlturaJanelaPixels = 500;
-const int TamanhoJanela = 40;
+const int LarguraJanelaPixels = 800;
+const int AlturaJanelaPixels = 640;
+const int TamanhoJanelaDesenho = 40;
+const int TamanhoJanela = 45;
 const GLdouble CoordenadaInicial = 0.0;
 const GLdouble CoordenadaFinal = 40.0;
 const int CanaisRGB = 3;
+const GLdouble AlturaRetangulo = 1;
+const GLdouble LarguraRetangulo = 2;
 
 GLfloat ultimoX = -1.0, ultimoY = -1.0;
 vector<Retangulo> retangulos;
-vector<Retangulo>::iterator iterador;
+GLdouble AlturaBarraPontuacao;
 
 
 void init() {
@@ -37,7 +40,7 @@ void init() {
 	glLoadIdentity();
 }
 
-void drawRect(float x, float y, float w, float h, float r, float g, float b) {
+void drawRect(GLdouble x, GLdouble y, GLdouble w, GLdouble h, float r, float g, float b) {
 	glColor3ub(r, g, b);
 	glVertex2d(x, y); // ponto esquerda inferior
 	glVertex2d(x, y + h); // ponto esquerda superior
@@ -47,12 +50,10 @@ void drawRect(float x, float y, float w, float h, float r, float g, float b) {
 
 void render() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	int altura = 1;
-	int largura = 2;
 	int indiceRetanguloAtual = 0;
 	
-	float xx; // Canto 0 da tela
-	float yy = 0;
+	GLdouble xx; // Canto 0 da tela
+	GLdouble yy = 0;
 	
 	for (int y = 0; y < TotalRetangulosAltura; y++) {
 		xx = 0;
@@ -61,15 +62,16 @@ void render() {
 
 			if (retanguloAtual.EstaVisivel()) {
 				glBegin(GL_QUADS);
-					drawRect(xx, yy, largura, altura, retanguloAtual.ObterR(), retanguloAtual.ObterG(), retanguloAtual.ObterB());
+					Cor *corRetangulo = retanguloAtual.ObterCor();
+					drawRect(xx, yy, LarguraRetangulo, AlturaRetangulo, corRetangulo->ObterR(), corRetangulo->ObterG(), corRetangulo->ObterB());
 				glEnd();
 			}
 			indiceRetanguloAtual++;
-			xx += largura; // aumento na largura para desenhar próximo retângulo
+			xx += LarguraRetangulo; // aumento na largura para desenhar próximo retângulo
 		}
-		yy += altura; // aumenta altura base para desenhar próximo retângulo
+		yy += AlturaRetangulo; // aumenta altura base para desenhar próximo retângulo
 	}
-	
+	AlturaBarraPontuacao = yy;
 }
 
 void redimensionar(GLFWwindow *window, int w, int h) {
@@ -83,6 +85,36 @@ void redimensionar(GLFWwindow *window, int w, int h) {
 	glLoadIdentity();
 }
 
+GLubyte* ObterCorSelecionada() {
+	GLubyte *pixels = new unsigned char[3];
+	//Conversão da coordenada para coordenada de tela.
+	int xTela = (ultimoX * LarguraJanelaPixels) / TamanhoJanelaDesenho;
+	int yTela = (ultimoY * AlturaJanelaPixels) / TamanhoJanelaDesenho;
+
+	glReadPixels(xTela, AlturaJanelaPixels - yTela, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+	GLubyte *rgb = new GLubyte[CanaisRGB];
+
+	rgb[0] = pixels[0];
+	rgb[1] = pixels[1];
+	rgb[2] = pixels[2];
+
+	return rgb;
+}
+
+void Jogar(GLubyte* corSelecionadaTela) {
+	Cor corSelecionada = Cor(corSelecionadaTela[0], corSelecionadaTela[1], corSelecionadaTela[2]);
+	
+	for (vector<Retangulo>::iterator retanguloAtual = retangulos.begin(); retanguloAtual != retangulos.end(); ++retanguloAtual) {
+		Cor* corRetangulo = retanguloAtual->ObterCor();
+		bool coresParecidas = corRetangulo->EhProximo(corSelecionada);
+
+		if (coresParecidas) {
+			retanguloAtual->AlterarVisibilidade(false);
+		}
+	}
+}
+
 void tratarTeclado(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	/*Sem tratamento de teclado ainda.*/
@@ -91,29 +123,18 @@ void tratarTeclado(GLFWwindow* window, int key, int scancode, int action, int mo
 static void tratarPosMouse(GLFWwindow* window, double xpos, double ypos)
 {	
 	float xx = xpos / (float)LarguraJanelaPixels; 
-	ultimoX = xx * TamanhoJanela;
+	ultimoX = xx * TamanhoJanelaDesenho;
 
 	float yy = ypos / (float)AlturaJanelaPixels; 
-	ultimoY = yy * TamanhoJanela; 
+	ultimoY = yy * TamanhoJanelaDesenho; 
 }
 
 void tratarMouse(GLFWwindow* window, int button, int action, int mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		GLubyte *pixels = new unsigned char[3];
-		//Conversão da coordenada para coordenada de tela.
-		int xTela = (ultimoX * LarguraJanelaPixels) / TamanhoJanela;
-		int yTela = (ultimoY * AlturaJanelaPixels) / TamanhoJanela;
-
-		glReadPixels(xTela, AlturaJanelaPixels - yTela, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-					
-		GLubyte *rgb = new GLubyte[CanaisRGB];
-
-		rgb[0] = pixels[0];
-		rgb[1] = pixels[1];
-		rgb[2] = pixels[2]; 
-		int a = 0;
+		GLubyte *rgb = ObterCorSelecionada();
+		Jogar(rgb);
 	}
 }
 
@@ -124,8 +145,9 @@ float ObterComponenteDeCor() {
 void reset() {
 	float r, g, b;
 	srand((unsigned)time(NULL));
+	int tamanhoVetorRetangulos = TotalRetangulosAltura * TotalRetangulosComprimento;
 
-	for (int indice = 0; indice < 800; indice++) {
+	for (int indice = 0; indice < tamanhoVetorRetangulos; indice++) {
 		
 		r = ObterComponenteDeCor();
 		g = ObterComponenteDeCor();
@@ -159,8 +181,8 @@ int CALLBACK WinMain(
 	//Torna a janela o contexto ativo
 	glfwMakeContextCurrent(window);
 
-	//Define a função de callback para redimensionar
-	glfwSetWindowSizeCallback(window, redimensionar);
+	//Define a função de callback para redimensionar - PROBLEMA DE LEITURA DE COR AO REDIMENSIONAR
+	//glfwSetWindowSizeCallback(window, redimensionar);
 
 	//Define a função de callback para tratar eventos do teclado
 	glfwSetKeyCallback(window, tratarTeclado);

@@ -1,17 +1,30 @@
 #pragma once
 namespace Jogo {
-	class Retangulo
+	class Cor
 	{
 		float R;
 		float G;
 		float B;
+	public:
+		Cor(float r, float g, float b);
+
+		float ObterR();
+		float ObterG();
+		float ObterB();
+		bool EhProximo(Cor corBase);
+	};
+
+	class Retangulo
+	{
+		Cor* cor;
 		bool visivel;
 	public:
 		Retangulo(float r, float g, float b);
 
 		bool EstaVisivel();
-		float ObterR();
-		float ObterG();
-		float ObterB();
+		void AlterarVisibilidade(bool novaVisibilidade);
+		Cor* ObterCor();
 	};
+
+	
 }
