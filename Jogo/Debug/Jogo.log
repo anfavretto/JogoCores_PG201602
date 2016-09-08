@@ -1,8 +1,9 @@
-﻿  Jogo.cpp
-c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogo.cpp(45): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogo.cpp(46): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogo.cpp(47): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogo.cpp(49): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogo.cpp(51): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+﻿  JogoCores.cpp
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(47): warning C4244: 'return': conversion from 'int' to 'float', possible loss of data
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(69): warning C4244: 'argument': conversion from 'float' to 'GLubyte', possible loss of data
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(117): warning C4244: 'initializing': conversion from 'GLfloat' to 'int', possible loss of data
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(118): warning C4244: 'initializing': conversion from 'GLfloat' to 'int', possible loss of data
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\aline\documents\unisinos\processamento gráfico\aulas\aula 3\jogodascores\jogo\jogo\jogocores.cpp(168): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   Jogo.vcxproj -> C:\Users\Aline\Documents\Unisinos\Processamento Gráfico\Aulas\Aula 3\JogoDasCores\Jogo\Debug\Jogo.exe
   Jogo.vcxproj -> C:\Users\Aline\Documents\Unisinos\Processamento Gráfico\Aulas\Aula 3\JogoDasCores\Jogo\Debug\Jogo.pdb (Full PDB)

@@ -12,8 +12,6 @@ using namespace std;
 
 const int TotalRetangulosComprimento = 20;
 const int TotalRetangulosAltura = 40;
-const int LarguraJanelaPixels = 800;
-const int AlturaJanelaPixels = 640;
 const int TamanhoJanelaDesenho = 40;
 const int TamanhoJanela = 45;
 const GLdouble CoordenadaInicial = 0.0;
@@ -21,15 +19,20 @@ const GLdouble CoordenadaFinal = 40.0;
 const int CanaisRGB = 3;
 const GLdouble AlturaRetangulo = 1;
 const GLdouble LarguraRetangulo = 2;
+const int NumeroMaximoDeJogadas = 4;
 
 GLfloat ultimoX = -1.0, ultimoY = -1.0;
+int LarguraJanelaPixels = 800;
+int AlturaJanelaPixels = 640;
 vector<Retangulo> retangulos;
 GLdouble AlturaBarraPontuacao;
+int JogadasEfetuadas;
 
 
 void init() {
 	//Selecionando a cor para limpar cor de fundo
 	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glViewport(0, 0, (GLsizei)LarguraJanelaPixels, (GLsizei)AlturaJanelaPixels);
 
 	//Inicializa a visualização
 	glMatrixMode(GL_PROJECTION);
@@ -38,6 +41,28 @@ void init() {
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+}
+
+float ObterComponenteDeCor() {
+	return rand() % 256;
+}
+
+void reset() {
+	JogadasEfetuadas = 0;
+	retangulos.clear();
+	float r, g, b;
+	srand((unsigned)time(NULL));
+	int tamanhoVetorRetangulos = TotalRetangulosAltura * TotalRetangulosComprimento;
+
+	for (int indice = 0; indice < tamanhoVetorRetangulos; indice++) {
+
+		r = ObterComponenteDeCor();
+		g = ObterComponenteDeCor();
+		b = ObterComponenteDeCor();
+
+		Retangulo *novoRetangulo = new Retangulo(r, g, b);
+		retangulos.push_back(*novoRetangulo);
+	}
 }
 
 void drawRect(GLdouble x, GLdouble y, GLdouble w, GLdouble h, float r, float g, float b) {
@@ -76,7 +101,8 @@ void render() {
 
 void redimensionar(GLFWwindow *window, int w, int h) {
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-
+	AlturaJanelaPixels = h;
+	LarguraJanelaPixels = w;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(CoordenadaInicial, CoordenadaFinal, CoordenadaInicial, CoordenadaFinal, -1.0, 1.0);
@@ -102,22 +128,36 @@ GLubyte* ObterCorSelecionada() {
 	return rgb;
 }
 
+void TerminarJogo() {
+
+}
+
 void Jogar(GLubyte* corSelecionadaTela) {
+	JogadasEfetuadas++;
+
 	Cor corSelecionada = Cor(corSelecionadaTela[0], corSelecionadaTela[1], corSelecionadaTela[2]);
 	
 	for (vector<Retangulo>::iterator retanguloAtual = retangulos.begin(); retanguloAtual != retangulos.end(); ++retanguloAtual) {
-		Cor* corRetangulo = retanguloAtual->ObterCor();
-		bool coresParecidas = corRetangulo->EhProximo(corSelecionada);
+		if (retanguloAtual->EstaVisivel()) {
+			Cor* corRetangulo = retanguloAtual->ObterCor();
+			bool coresParecidas = corRetangulo->EhProximo(corSelecionada);
 
-		if (coresParecidas) {
-			retanguloAtual->AlterarVisibilidade(false);
+			if (coresParecidas) {
+				retanguloAtual->AlterarVisibilidade(false);
+			}
 		}
+	}
+
+	if (JogadasEfetuadas == NumeroMaximoDeJogadas) {
+		TerminarJogo();
 	}
 }
 
 void tratarTeclado(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	/*Sem tratamento de teclado ainda.*/
+	if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+		reset();
+	}
 }
 
 static void tratarPosMouse(GLFWwindow* window, double xpos, double ypos)
@@ -131,30 +171,12 @@ static void tratarPosMouse(GLFWwindow* window, double xpos, double ypos)
 
 void tratarMouse(GLFWwindow* window, int button, int action, int mods)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	{
-		GLubyte *rgb = ObterCorSelecionada();
-		Jogar(rgb);
-	}
-}
-
-float ObterComponenteDeCor() {
-	return rand() % 256;
-}
-
-void reset() {
-	float r, g, b;
-	srand((unsigned)time(NULL));
-	int tamanhoVetorRetangulos = TotalRetangulosAltura * TotalRetangulosComprimento;
-
-	for (int indice = 0; indice < tamanhoVetorRetangulos; indice++) {
-		
-		r = ObterComponenteDeCor();
-		g = ObterComponenteDeCor();
-		b = ObterComponenteDeCor();
-
-		Retangulo *novoRetangulo = new Retangulo(r, g, b);
-		retangulos.push_back(*novoRetangulo);
+	if (JogadasEfetuadas < NumeroMaximoDeJogadas) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+		{
+			GLubyte *rgb = ObterCorSelecionada();
+			Jogar(rgb);
+		}
 	}
 }
 
@@ -181,8 +203,8 @@ int CALLBACK WinMain(
 	//Torna a janela o contexto ativo
 	glfwMakeContextCurrent(window);
 
-	//Define a função de callback para redimensionar - PROBLEMA DE LEITURA DE COR AO REDIMENSIONAR
-	//glfwSetWindowSizeCallback(window, redimensionar);
+	//Define a função de callback para redimensionar
+	glfwSetWindowSizeCallback(window, redimensionar);
 
 	//Define a função de callback para tratar eventos do teclado
 	glfwSetKeyCallback(window, tratarTeclado);
@@ -197,7 +219,7 @@ int CALLBACK WinMain(
 	//Inicializa a camera
 	init();
 
-	reset(); // inicializa vetor de retangulos
+	reset(); // inicializa vetor de retangulos e contagem de jogadas.
 
 	//Faça o loop até fechar a janela
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
