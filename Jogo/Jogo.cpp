@@ -37,7 +37,6 @@ float Jogo::Cor::ObterB() {
 	return B;
 }
 bool Jogo::Cor::EhProximo(Cor corBase) {
-	//d = raiz de (R selecionada - R comparando)² + (G selecionada - G comparando)² + (B selecionada - B comparando)²
 	float diferencaR = corBase.ObterR() - ObterR();
 	float diferencaG = corBase.ObterG() - ObterG();
 	float diferencaB = corBase.ObterB() - ObterB();

@@ -1,0 +1,9 @@
+﻿  Imagem.cpp
+  JogoCores.cpp
+JogoCores.cpp(4): fatal error C1083: Cannot open include file: 'GLFW/glfw3.h': No such file or directory
+  Jogo.cpp
+Jogo.cpp(44): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Jogo.cpp(45): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Jogo.cpp(46): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Jogo.cpp(48): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Jogo.cpp(50): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
