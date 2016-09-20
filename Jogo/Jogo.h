@@ -12,6 +12,7 @@ namespace Jogo {
 		float ObterG();
 		float ObterB();
 		bool EhProximo(Cor corBase);
+		bool EhPreto();
 	};
 
 	class Retangulo
@@ -26,5 +27,4 @@ namespace Jogo {
 		Cor* ObterCor();
 	};
 
-	
 }

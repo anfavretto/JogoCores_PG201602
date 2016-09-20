@@ -53,3 +53,4 @@ bool Jogo::Cor::EhProximo(Cor corBase) {
 
 	return distanciaEncontrada <= 0.15;
 }
+bool Jogo::Cor::EhPreto() { return this->R == 0 && this->G == 0 && this->B == 0; }

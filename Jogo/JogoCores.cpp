@@ -6,8 +6,9 @@
 #include <time.h>
 #include "Jogo.h"
 #include "Imagem.h"
+#include "Fonte.h"
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include<fstream>
 
 using namespace Jogo;
@@ -16,11 +17,10 @@ using namespace std;
 const int TotalRetangulosComprimento = 20;
 const int TotalRetangulosAltura = 40;
 const int TamanhoJanelaDesenho = 40;
-const int TamanhoJanela = 45;
+const int TamanhoJanela = 43;
 const GLdouble CoordenadaInicial = 0.0;
 const GLdouble CoordenadaFinalX = 40.0;
-const GLdouble CoordenadaFinalY = 42.0;
-const int CanaisRGB = 3;
+const GLdouble CoordenadaFinalY = 43.0;
 const GLdouble AlturaRetangulo = 1;
 const GLdouble LarguraRetangulo = 2;
 const int NumeroMaximoDeJogadas = 4;
@@ -36,8 +36,87 @@ vector<Retangulo> retangulos;
 GLdouble AlturaBarraPontuacao;
 int JogadasEfetuadas;
 int PontosJogador = 0;
-Imagem* letras = new Imagem();
+Fonte *arial = new Fonte("arial.ptm", 16, 16);
 
+float ObterComponenteDeCor() {
+	return rand() % 256;
+}
+
+void ExibirPontuacao() {
+	bool fgJogadaFinal = JogadasEfetuadas == NumeroMaximoDeJogadas;
+
+	std::string pontuacao = fgJogadaFinal ? "Pontuacao Final: " : "Pontuacao: ";
+	std::string exibir = pontuacao + std::to_string(PontosJogador);
+	arial->escrever(exibir, 1, (int)AlturaBarraPontuacao);
+	glFlush();
+}
+
+void drawRect(GLdouble x, GLdouble y, GLdouble w, GLdouble h, float r, float g, float b) {
+	glColor3ub(r, g, b);
+	glVertex2d(x, y); // ponto esquerda inferior
+	glVertex2d(x, y + h); // ponto esquerda superior
+	glVertex2d(x + w, y + h);// ponto direita superior
+	glVertex2d(x + w, y); // ponto direita inferior
+}
+
+void redimensionar(GLFWwindow *window, int w, int h) {
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	AlturaJanelaPixels = h;
+	LarguraJanelaPixels = w;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(CoordenadaInicial, CoordenadaFinalX, CoordenadaFinalY, CoordenadaInicial, -1.0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+GLubyte* ObterCorSelecionada() {
+	float tamanhoRetangulo = (float)AlturaJanelaPixels / (float)TamanhoJanela;
+	float limiteRetangulos = tamanhoRetangulo * 40;
+
+	GLubyte *pixels = new unsigned char[3]{ 0,0,0 };
+	//Conversão da coordenada para coordenada de tela.
+	int xTela = (ultimoX * LarguraJanelaPixels) / TamanhoJanelaDesenho;
+	int yTela = (ultimoY * AlturaJanelaPixels) / TamanhoJanelaDesenho;
+
+	if (yTela < limiteRetangulos) {
+		glReadPixels(xTela, AlturaJanelaPixels - yTela, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	}
+	return pixels;
+}
+
+int AumentarPontuacao(int pontosRodada) {
+	switch (JogadasEfetuadas)
+	{
+	case 1:
+		return pontosRodada + ValorPontosPrimeiraRodada;
+	case 2:
+		return pontosRodada + ValorPontosSegundaRodada;
+	case 3:
+		return pontosRodada + ValorPontosTerceiraRodada;
+	default:
+		return pontosRodada + ValorPontosQuartaRodada;
+	}
+}
+
+void Jogar(Cor corSelecionadaTela) {
+	int pontosRodada = 0;
+
+	for (vector<Retangulo>::iterator retanguloAtual = retangulos.begin(); retanguloAtual != retangulos.end(); ++retanguloAtual) {
+		if (retanguloAtual->EstaVisivel()) {
+			Cor* corRetangulo = retanguloAtual->ObterCor();
+			bool coresParecidas = corRetangulo->EhProximo(corSelecionadaTela);
+
+			if (coresParecidas) {
+				retanguloAtual->AlterarVisibilidade(false);
+				pontosRodada = AumentarPontuacao(pontosRodada);
+			}
+		}
+	}
+	JogadasEfetuadas++;
+	PontosJogador += pontosRodada;
+}
 
 void init() {
 	//Selecionando a cor para limpar cor de fundo
@@ -51,12 +130,6 @@ void init() {
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-	letras->carregarImagem("C:\\Users\\Aline\\Documents\\Unisinos\\Processamento Gráfico\\Aulas\\Aula 6\\arial.ptm");
-}
-
-float ObterComponenteDeCor() {
-	return rand() % 256;
 }
 
 void reset() {
@@ -75,14 +148,6 @@ void reset() {
 		Retangulo *novoRetangulo = new Retangulo(r, g, b);
 		retangulos.push_back(*novoRetangulo);
 	}
-}
-
-void drawRect(GLdouble x, GLdouble y, GLdouble w, GLdouble h, float r, float g, float b) {
-	glColor3ub(r, g, b);
-	glVertex2d(x, y); // ponto esquerda inferior
-	glVertex2d(x, y + h); // ponto esquerda superior
-	glVertex2d(x + w, y + h);// ponto direita superior
-	glVertex2d(x + w, y); // ponto direita inferior
 }
 
 void render() {
@@ -108,142 +173,9 @@ void render() {
 		}
 		yy += AlturaRetangulo; // aumenta altura base para desenhar próximo retângulo
 	}
-	AlturaBarraPontuacao = yy;
-}
+	AlturaBarraPontuacao = yy + AlturaRetangulo + 1;
 
-void redimensionar(GLFWwindow *window, int w, int h) {
-	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-	AlturaJanelaPixels = h;
-	LarguraJanelaPixels = w;
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(CoordenadaInicial, CoordenadaFinalX, CoordenadaFinalY, CoordenadaInicial, -1.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-GLubyte* ObterCorSelecionada() {
-	GLubyte *pixels = new unsigned char[3];
-	//Conversão da coordenada para coordenada de tela.
-	int xTela = (ultimoX * LarguraJanelaPixels) / TamanhoJanelaDesenho;
-	int yTela = (ultimoY * AlturaJanelaPixels) / TamanhoJanelaDesenho;
-
-	glReadPixels(xTela, AlturaJanelaPixels - yTela, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-	GLubyte *rgb = new GLubyte[CanaisRGB];
-
-	rgb[0] = pixels[0];
-	rgb[1] = pixels[1];
-	rgb[2] = pixels[2];
-
-	return rgb;
-}
-
-void ExibirPontuacao() {
-	char txt[16];
-	sprintf_s(txt, "%s%d", "PONTUACAO:", PontosJogador);
-
-	int xDest = 0, yDest = 0;
-
-	Imagem* pontuacaoExibir = new Imagem(800, 30);
-	
-	for (int i = 0; i < sizeof(txt); i++) {
-		switch (txt[i])
-		{
-		case '0':
-			letras->subimage(pontuacaoExibir, 0, 47); break;
-		case '1':
-			letras->subimage(pontuacaoExibir, 16, 47); break;
-		case '2':
-			letras->subimage(pontuacaoExibir, 32, 47); break;
-		case '3':
-			letras->subimage(pontuacaoExibir, 48, 47); break;
-		case '4':
-			letras->subimage(pontuacaoExibir, 64, 47); break;
-		case '5':
-			letras->subimage(pontuacaoExibir, 80, 47); break;
-		case '6':
-			letras->subimage(pontuacaoExibir, 96, 47); break;
-		case '7':
-			letras->subimage(pontuacaoExibir, 112, 47); break;
-		case '8':
-			letras->subimage(pontuacaoExibir, 128, 47); break;
-		case '9':
-			letras->subimage(pontuacaoExibir, 144, 47); break;
-		case ':':
-			letras->subimage(pontuacaoExibir, 160, 47); break;
-		case 'P':
-			letras->subimage(pontuacaoExibir, 0, 80); break;
-		case 'O':
-			letras->subimage(pontuacaoExibir, 176, 47); break;
-		case 'N':
-			letras->subimage(pontuacaoExibir, 192, 47); break;
-		case 'T':
-			letras->subimage(pontuacaoExibir, 208, 47); break;
-		case 'U':
-			letras->subimage(pontuacaoExibir, 224, 47); break;
-		case 'A':
-			letras->subimage(pontuacaoExibir, 48, 47); break;
-		case 'C':
-			letras->subimage(pontuacaoExibir, 48, 47); break;
-			break;
-		default:
-			break;
-		}
-		xDest += 16;
-	}
-	glDrawPixels(pontuacaoExibir->getWidth(), pontuacaoExibir->getHeight(), GL_BGR_EXT, GL_UNSIGNED_BYTE, pontuacaoExibir->getPixels());
-
-	//glFlush();
-}
-
-void TerminarJogo() {
-	//GLint x = (10.0 * LarguraJanelaPixels) / TamanhoJanela;
-	//GLint y = AlturaJanelaPixels - ((41.0 * AlturaJanelaPixels) / TamanhoJanela);
-
-	/*glColor3f(1.0, 1.0, 1.0);
-	glRasterPos2i(15, 15);
-	printString("Fim de jogo");
-	glFlush();*/
-}
-
-int AumentarPontuacao(int pontosRodada) {
-	switch (JogadasEfetuadas)
-	{
-	case 1:
-		return pontosRodada + ValorPontosPrimeiraRodada;
-	case 2:
-		return pontosRodada + ValorPontosSegundaRodada;
-	case 3:
-		return pontosRodada + ValorPontosTerceiraRodada;
-	default:
-		return pontosRodada + ValorPontosQuartaRodada;
-	}
-}
-
-void Jogar(GLubyte* corSelecionadaTela) {
-	JogadasEfetuadas++;
-	int pontosRodada = 0;
-
-	Cor corSelecionada = Cor(corSelecionadaTela[0], corSelecionadaTela[1], corSelecionadaTela[2]);
-
-	for (vector<Retangulo>::iterator retanguloAtual = retangulos.begin(); retanguloAtual != retangulos.end(); ++retanguloAtual) {
-		if (retanguloAtual->EstaVisivel()) {
-			Cor* corRetangulo = retanguloAtual->ObterCor();
-			bool coresParecidas = corRetangulo->EhProximo(corSelecionada);
-
-			if (coresParecidas) {
-				retanguloAtual->AlterarVisibilidade(false);
-				pontosRodada = AumentarPontuacao(pontosRodada);
-			}
-		}
-	}
-	PontosJogador += pontosRodada;
 	ExibirPontuacao();
-	if (JogadasEfetuadas == NumeroMaximoDeJogadas) {
-		TerminarJogo();
-	}
 }
 
 void tratarTeclado(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -268,7 +200,10 @@ void tratarMouse(GLFWwindow* window, int button, int action, int mods)
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 		{
 			GLubyte *rgb = ObterCorSelecionada();
-			Jogar(rgb);
+			Cor corSelecionada = Cor(rgb[0], rgb[1], rgb[2]);
+			if (!corSelecionada.EhPreto()) {
+				Jogar(corSelecionada);
+			}
 		}
 	}
 }
